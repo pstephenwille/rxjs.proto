@@ -1,40 +1,15 @@
-console.clear();
+var btn = document.querySelector('#clickMe');
 
-/*
- * promise always runs */
-var promise = new Promise((resolve) => {
-  setTimeout(() => {
-    console.log('promise timeout hit');
-    resolve(42);
-  }, 1000);
-  console.log('promise started');
-});
+var clicks = Rx.Observable.fromEvent(btn, 'click');
 
-promise.then(x => console.log(x));
 
-/*
- * observables are lazy.
- * contain thier own setup/tear down code blocks.
- * references to observables allow you to re-call it, and get fresh results.
- * traditional promises return stale results.
- * */
-var source = Rx.Observable.create((observer) => {
-  var id = setTimeout(() => {
-    /* set up code */
-    console.log('observable timeout hit');
-    observer.onNext([33]);
-  }, 1000);
-  console.log('observable started');
+clicks.scan(0, (s) => s + 1)
+  .buffer(clicks.throttle(1000))
+  .forEach(x => sendValues(x));
 
-  return () => {
-    /* tear down & clean up code */
-    console.log('dispose called');
-    clearTimeout(id);
-  };
-});
-
-var disposable = source.forEach(x => console.log(x));
-
-setTimeout(() => {
-  disposable.dispose();
-}, 500);
+function sendValues(arr) {
+  var pre = document.createElement('pre');
+  pre.innerHTML = JSON.stringify(arr);
+  document.querySelector('#results')
+    .appendChild(pre);
+}
